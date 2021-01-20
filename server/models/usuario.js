@@ -1,31 +1,39 @@
-const mongoose = require('mongoose');
+const mogoose = require('mongoose');
+const uniqueValidator = require('mongoose-unique-validator');
 
-let Schema = mongoose.Schema; // permite crear la estructura dentro de nuestra base de datos, el esqueleto, como quiero ir almacenadndo cada uno de los documentos
 
-let usuarioShema = new Schema({
+let Schema = mogoose.Schema;
+
+let rolesValidos = {
+    values: ['ADMIN_ROLE', 'USER_ROLE'],
+    message: '{VALUE} no es un rol válido'
+}
+
+let usuarioSchema = new Schema({
     nombre: {
         type: String,
-        require: [true,'El nombre es requerido'],
-
+        required: [true, 'El nombre es requerido']
     },
     email: {
         type: String,
-        required: [true,'El correo es necesario']
+        required: [true, 'El e-mail es necesario'],
+        unique: true
     },
     password: {
         type: String,
-        required: [true, 'El password es requerido']
+        required: [true, 'El password es obligatorio']
     },
-    imagen: {
+    img: {
         type: String,
-        required: false,
+        required: false
     },
     role: {
         type: String,
-        default: 'USER_ROLE'
+        default: 'USER_ROLE',
+        enum: rolesValidos
     },
     estado: {
-        type: Boolean,
+        type:Boolean,
         default: true
     },
     google: {
@@ -34,4 +42,14 @@ let usuarioShema = new Schema({
     }
 });
 
-module.exports = mongoose.model('Usuario',usuarioShema)
+usuarioSchema.plugin(uniqueValidator, {message: '{PATH} debe ser único'});
+
+usuarioSchema.methods.toJSON = function () {
+    let user = this;
+    let userObjet = user.toObject();
+    delete userObjet.password;
+
+    return userObjet;
+}
+
+module.exports = mogoose.model('Usuario', usuarioSchema);
